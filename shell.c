@@ -15,13 +15,14 @@ int _strcmp(char *s1, char *s2);
  *
  * Return: Always 0 (ok)
  */
-int main(int argc, char *argv[], char *envp[])
+int main(int argc, char *argv[] __attribute__ ((unused)),
+	 char *envp[] __attribute__ ((unused)))
 {
 	size_t n = 1, i = 0;
-	char *buff = NULL;
+	char *buff = malloc(1);
 	int rflag = 0, tmp;
 	/*When not mallocing, getline alloced too much space. Rely on realloc*/
-
+	(void)argc;
 	/*Set SIGINT to default to be caught by the handler*/
 	signal(SIGINT, sigint_handle);
 
@@ -68,6 +69,7 @@ int _strcmp(char *s1, char *s2)
  */
 void sigint_handle(int sig)
 {
+	(void)sig;
 	signal(SIGINT, sigint_handle);
 	printf("\n$ ");
 	fflush(stdout);
