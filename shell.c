@@ -29,7 +29,9 @@ int main(int argc, char *argv[] __attribute__ ((unused)),
 	{
 		i = 0;
 		printf("$ ");/*Prints the $ prompt*/
-		getline(&buff, &n, stdin);/*If buff is small, getline reallocs*/
+		if (getline(&buff, &n, stdin) == EOF)
+		    return (0);
+/*If buff is small, getline reallocs*/
 		if (!buff)
 			dprintf(STDERR_FILENO, NOMEM), exit(97);
 		while (buff[i])
@@ -39,7 +41,8 @@ int main(int argc, char *argv[] __attribute__ ((unused)),
 			return (0);
 		e = execve(buff, argv, envp);
 		if (e == -1)
-			printf("%s: %d: %s: not found\n", argv[0], runs++, buff);
+			printf("%s: %d: %s: not found\n", argv[0],
+			       runs++, buff);
 	}
 	return (0);
 }
