@@ -19,13 +19,13 @@ int main(int argc, char *argv[] __attribute__ ((unused)),
 {
 	size_t n = 1, i = 0;
 	char *buff = malloc(1);
-	int rflag = 0, e;
+	int e, runs = 1;
 	/*When not mallocing, getline alloced too much space. Rely on realloc*/
 	(void)argc;
 	/*Set SIGINT to default to be caught by the handler*/
 	signal(SIGINT, sigint_handle);
 
-	while (rflag == 0)/*Always true unless exit sent to prompt*/
+	while (1)/*Always true unless exit sent to prompt*/
 	{
 		i = 0;
 		printf("$ ");/*Prints the $ prompt*/
@@ -36,10 +36,10 @@ int main(int argc, char *argv[] __attribute__ ((unused)),
 			i++;
 		buff[i - 1] = 0;/*getline automatically appends a newline*/
 		if (!_strcmp(buff, "exit"))
-			rflag = 1;
+			return (0);
 		e = execve(buff, argv, envp);
 		if (e == -1)
-		printf("Failed to execute file %s\n", buff);
+			printf("%s: %d: %s: not found\n", argv[0], runs++, buff);
 	}
 	return (0);
 }
