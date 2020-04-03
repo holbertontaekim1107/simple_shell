@@ -3,7 +3,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <signal.h>
-
 #define NOMEM ("Error: Failed to allocate memory")
 void sigint_handle(int sig);
 int _strcmp(char *s1, char *s2);
@@ -20,7 +19,7 @@ int main(int argc, char *argv[] __attribute__ ((unused)),
 {
 	size_t n = 1, i = 0;
 	char *buff = malloc(1);
-	int rflag = 0, tmp;
+	int rflag = 0, e;
 	/*When not mallocing, getline alloced too much space. Rely on realloc*/
 	(void)argc;
 	/*Set SIGINT to default to be caught by the handler*/
@@ -38,8 +37,9 @@ int main(int argc, char *argv[] __attribute__ ((unused)),
 		buff[i - 1] = 0;/*getline automatically appends a newline*/
 		if (!_strcmp(buff, "exit"))
 			rflag = 1;
-		tmp = n;
-		printf("%d, %s\n", tmp, buff);
+		e = execve(buff, argv, envp);
+		if (e == -1)
+		printf("Failed to execute file %s\n", buff);
 	}
 	return (0);
 }
