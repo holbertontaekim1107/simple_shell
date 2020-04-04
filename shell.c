@@ -1,9 +1,9 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <signal.h>
-#define NOMEM ("Error: Failed to allocate memory")
+#include "shell.h"
+#include <sys/wait.h>
+#include <sys/types.h>
+
+#define NOMEM ("Error: Failed to allocate memory\n")
+#define FAILFORK ("Error creating fork\n")
 void sigint_handle(int sig);
 int _strcmp(char *s1, char *s2);
 /**
@@ -19,7 +19,8 @@ int main(int argc, char *argv[] __attribute__ ((unused)),
 {
 	size_t n = 1, i = 0;
 	char *buff = malloc(1);
-	int e, runs = 1;
+	int e = 0, runs = 1, status;
+	pid_t pid, w;
 	/*When not mallocing, getline alloced too much space. Rely on realloc*/
 	(void)argc;
 	/*Set SIGINT to default to be caught by the handler*/
@@ -27,8 +28,8 @@ int main(int argc, char *argv[] __attribute__ ((unused)),
 
 	while (1)/*Always true unless exit sent to prompt*/
 	{
+		write(1, "$ ", 2);
 		i = 0;
-		printf("$ ");/*Prints the $ prompt*/
 		if (getline(&buff, &n, stdin) == EOF)
 		    return (0);
 /*If buff is small, getline reallocs*/
@@ -37,13 +38,34 @@ int main(int argc, char *argv[] __attribute__ ((unused)),
 		while (buff[i])
 			i++;
 		buff[i - 1] = 0;/*getline automatically appends a newline*/
+		if (!_strcmp(buff, ""))
+			continue;
 		if (!_strcmp(buff, "exit"))
 			return (0);
-		e = execve(buff, argv, envp);
-		if (e == -1)
-			printf("%s: %d: %s: not found\n", argv[0],
-			       runs++, buff);
+		pid = fork();
+		if (pid == 0)
+		{
+			e = execve(buff, argv, envp);
+			if (e == -1)
+			{
+				printf("%s: %d: %s: not found\n", argv[0],
+				       runs++, buff);
+			}
+			return (0);
+		}
+		else if (pid == -1)
+			dprintf(STDERR_FILENO, FAILFORK), exit(99);
+		else
+		{
+			do {
+			w = waitpid(pid, &status, WUNTRACED | WCONTINUED);
+			if (w == -1)
+				perror("Error at waitpid\n"), exit(99);
+			} while (!WIFEXITED(status) && !WIFSIGNALED(status));
+		}
+		runs++;
 	}
+	free(buff);
 	return (0);
 }
 /**
