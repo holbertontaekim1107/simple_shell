@@ -1,4 +1,5 @@
 #include "shell.h"
+#include <string.h>
 
 /**
  *
@@ -43,5 +44,5 @@ char **_strtok(char *line, char *delm)
 	}
 	ptr[i] = NULL;
 
-	return (tok);
+	return (ptr);
 }

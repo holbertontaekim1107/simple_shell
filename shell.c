@@ -1,6 +1,7 @@
 #include "shell.h"
 #include <sys/wait.h>
 #include <sys/types.h>
+#include <string.h>
 
 #define NOMEM ("Error: Failed to allocate memory\n")
 #define FAILFORK ("Error creating fork\n")
@@ -18,7 +19,7 @@ int main(int argc, char *argv[] __attribute__ ((unused)),
 	 char *envp[] __attribute__ ((unused)))
 {
 	size_t n = 1, i = 0;
-	char *buff = malloc(1);
+	char *buff = malloc(1), **tok;
 	int e = 0, runs = 1, status;
 	pid_t pid, w;
 	/*When not mallocing, getline alloced too much space. Rely on realloc*/
@@ -29,27 +30,24 @@ int main(int argc, char *argv[] __attribute__ ((unused)),
 	while (1)/*Always true unless exit sent to prompt*/
 	{
 		write(1, "$ ", 2);
-		i = 0;
 		if (getline(&buff, &n, stdin) == EOF)
 		    return (0);
 /*If buff is small, getline reallocs*/
 		if (!buff)
 			dprintf(STDERR_FILENO, NOMEM), exit(97);
-		while (buff[i])
-			i++;
-		buff[i - 1] = 0;/*getline automatically appends a newline*/
 		if (!_strcmp(buff, ""))
 			continue;
-		if (!_strcmp(buff, "exit"))
+		tok = _strtok(buff, " ");
+		if (!_strcmp(tok[0], "exit"))
 			return (0);
 		pid = fork();
 		if (pid == 0)
 		{
-			e = execve(buff, argv, envp);
+			e = execve(tok[0], tok, envp);
 			if (e == -1)
 			{
 				printf("%s: %d: %s: not found\n", argv[0],
-				       runs++, buff);
+				       runs++, tok[0]);
 			}
 			return (0);
 		}
@@ -66,6 +64,7 @@ int main(int argc, char *argv[] __attribute__ ((unused)),
 		runs++;
 	}
 	free(buff);
+	free(tok);
 	return (0);
 }
 /**
