@@ -44,6 +44,8 @@ int main(int argc, char *argv[], char *envp[])
 		{
 			if (_atoi(tok[1]) > 0)
 				exit(_atoi(tok[1]));
+			else
+				return (0);
 		}
 		pid = fork();
 		f = fork_exe(pid, &runs, tok, argv, envp);
@@ -130,6 +132,8 @@ int _atoi(char *s)
 	int i = 0, j, n1, n2, neg = 1, flag = 0;
 	unsigned int sum = 0;
 
+	if (s == NULL)
+		return (-1);
 	while (s[i] != '\0')
 		i++;
 	for (j = 0, n1 = 0, n2 = 0; j <= i; j++)
