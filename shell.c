@@ -5,6 +5,9 @@
 
 #define NOMEM ("Error: Failed to allocate memory\n")
 #define FAILFORK ("Error creating fork\n")
+
+int _atoi(char *s);
+int fork_exe(pid_t pid, int *runs, char **tok, char **argv, char **envp);
 void sigint_handle(int sig);
 int _strcmp(char *s1, char *s2);
 /**
@@ -15,13 +18,12 @@ int _strcmp(char *s1, char *s2);
  *
  * Return: Always 0 (ok)
  */
-int main(int argc, char *argv[] __attribute__ ((unused)),
-	 char *envp[] __attribute__ ((unused)))
+int main(int argc, char *argv[], char *envp[])
 {
 	size_t n = 1, i = 0;
 	char *buff = malloc(1), **tok;
-	int e = 0, runs = 1, status;
-	pid_t pid, w;
+	int runs = 1, f;
+	pid_t pid;
 	/*When not mallocing, getline alloced too much space. Rely on realloc*/
 	(void)argc;
 	/*Set SIGINT to default to be caught by the handler*/
@@ -31,7 +33,7 @@ int main(int argc, char *argv[] __attribute__ ((unused)),
 	{
 		write(1, "$ ", 2);
 		if (getline(&buff, &n, stdin) == EOF)
-		    return (0);
+			return (0);
 /*If buff is small, getline reallocs*/
 		if (!buff)
 			dprintf(STDERR_FILENO, NOMEM), exit(97);
@@ -39,28 +41,12 @@ int main(int argc, char *argv[] __attribute__ ((unused)),
 			continue;
 		tok = _strtok(buff, " ");
 		if (!_strcmp(tok[0], "exit"))
-			return (0);
+		{
+			if (_atoi(tok[1]) > 0)
+				exit(_atoi(tok[1]));
+		}
 		pid = fork();
-		if (pid == 0)
-		{
-			e = execve(tok[0], tok, envp);
-			if (e == -1)
-			{
-				printf("%s: %d: %s: not found\n", argv[0],
-				       runs++, tok[0]);
-			}
-			return (0);
-		}
-		else if (pid == -1)
-			dprintf(STDERR_FILENO, FAILFORK), exit(99);
-		else
-		{
-			do {
-			w = waitpid(pid, &status, WUNTRACED | WCONTINUED);
-			if (w == -1)
-				perror("Error at waitpid\n"), exit(99);
-			} while (!WIFEXITED(status) && !WIFSIGNALED(status));
-		}
+		f = fork_exe(pid, &runs, tok, argv, envp);
 		runs++;
 	}
 	free(buff);
@@ -97,4 +83,81 @@ void sigint_handle(int sig)
 	signal(SIGINT, sigint_handle);
 	printf("\n$ ");
 	fflush(stdout);
+}
+/**
+ * fork_exe - performs an action based on fork pid
+ * @pid: pid currently on
+ * @runs: number of runs in the shell for error messages
+ * @tok: An array of strings containing the tokens
+ * @argv: Used for the file name at argv[0]
+ * @envp: Program environment
+ *
+ * Return: 0
+ */
+int fork_exe(pid_t pid, int *runs, char **tok, char **argv, char **envp)
+{
+	int e = 0, status;
+	pid_t w;
+
+	if (pid == 0)
+	{
+		e = execve(tok[0], tok, envp);
+		if (e == -1)
+		{
+			printf("%s: %d: %s: not found\n", argv[0],
+			       *runs++, tok[0]);
+		}
+		return (0);
+	}
+	else if (pid == -1)
+		dprintf(STDERR_FILENO, FAILFORK), exit(99);
+	else
+	{
+		do {
+			w = waitpid(pid, &status, WUNTRACED | WCONTINUED);
+			if (w == -1)
+				perror("Error at waitpid\n"), exit(99);
+		} while (!WIFEXITED(status) && !WIFSIGNALED(status));
+	}
+}
+/**
+ * _atoi - converts a string to an integer
+ *@s: string to be converted
+ * Return: the number after conversion, or 0
+ */
+int _atoi(char *s)
+{
+	int i = 0, j, n1, n2, neg = 1, flag = 0;
+	unsigned int sum = 0;
+
+	while (s[i] != '\0')
+		i++;
+	for (j = 0, n1 = 0, n2 = 0; j <= i; j++)
+	{
+		if (s[j] == '-')
+		{
+			neg *= -1;
+			continue;
+		}
+		else if (s[j] == '+')
+		{
+			continue;
+		}
+		else if ((s[j] >= '0') && (s[j] <= '9'))
+		{
+			if (n1 > n2)
+			{
+				sum *= 10;
+				n2 = n1;
+			}
+			sum += s[j] - '0';
+			flag = 1;
+			n1++;
+		}
+		else if (s[j] == ' ')
+			continue;
+		else if ((flag == 1) && (!(s[j] >= '0') || !(s[j] <= '9')))
+			break;
+	}
+	return (sum * neg);
 }
