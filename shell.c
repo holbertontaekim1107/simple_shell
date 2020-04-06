@@ -20,9 +20,9 @@ int _strcmp(char *s1, char *s2);
  */
 int main(int argc, char *argv[], char *envp[])
 {
-	size_t n = 1, i = 0;
+	size_t n = 1;
 	char *buff = malloc(1), **tok;
-	int runs = 1, f;
+	int runs = 1;
 	pid_t pid;
 	/*When not mallocing, getline alloced too much space. Rely on realloc*/
 	(void)argc;
@@ -48,7 +48,7 @@ int main(int argc, char *argv[], char *envp[])
 				return (0);
 		}
 		pid = fork();
-		f = fork_exe(pid, &runs, tok, argv, envp);
+		fork_exe(pid, &runs, tok, argv, envp);
 		runs++;
 	}
 	free(buff);
@@ -121,6 +121,7 @@ int fork_exe(pid_t pid, int *runs, char **tok, char **argv, char **envp)
 				perror("Error at waitpid\n"), exit(99);
 		} while (!WIFEXITED(status) && !WIFSIGNALED(status));
 	}
+	return (0);
 }
 /**
  * _atoi - converts a string to an integer

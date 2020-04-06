@@ -40,7 +40,7 @@ char **_strtok(char *line, char *delm)
 		{
 			for (i -= 1; i >= 0; i--)
 				free(ptr[i]);
-			exit;
+			exit (99);
 		}
 		strcpy(ptr[i], tok);
 		tok = strtok(NULL, delm);
