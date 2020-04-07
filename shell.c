@@ -22,7 +22,7 @@ int main(int argc, char *argv[], char *envp[])
 {
 	size_t n = 1;
 	char *buff = malloc(1), **tok;
-	int runs = 1;
+	int runs = 1, i;
 	pid_t pid;
 	/*When not mallocing, getline alloced too much space. Rely on realloc*/
 	(void)argc;
@@ -31,7 +31,8 @@ int main(int argc, char *argv[], char *envp[])
 
 	while (1)/*Always true unless exit sent to prompt*/
 	{
-		write(1, "$ ", 2);
+		if (isatty(STDIN_FILENO))
+			write(1, "$ ", 2);
 		if (getline(&buff, &n, stdin) == EOF)
 			return (0);
 /*If buff is small, getline reallocs*/
