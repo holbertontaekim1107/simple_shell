@@ -6,7 +6,8 @@
 #define NOMEM ("Error: Failed to allocate memory\n")
 #define FAILFORK ("Error creating fork\n")
 
-int path_check(int *runs, char **tok, char **envp, char **argv, char **pathTok);
+int path_check(int *runs, char **tok, char **envp, char **argv,
+	       char **pathTok);
 void free_all(char **s);
 int fork_exe(char **tok, char **envp);
 void sigint_handle(int sig);
@@ -129,6 +130,7 @@ void free_all(char **s)
  * @tok: tokenized input
  * @envp: program environment
  * @argv: argument vector
+ * @pathTok: Tokenized path
  *
  * Return: Always 0
  */
