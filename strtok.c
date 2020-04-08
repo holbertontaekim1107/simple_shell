@@ -21,7 +21,8 @@ char **_strtok(char *line, char *delm)
 					 line[i + 1] == '\0'))
 			words++;
 	}
-	line[i - 1] = '\0';
+	if (line[i - 1] == '\n')
+		line[i - 1] = '\0';
 
 	ptr = malloc(sizeof(char *) * (words + 1));
 
