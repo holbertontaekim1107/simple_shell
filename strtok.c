@@ -28,7 +28,7 @@ char **_strtok(char *line, char *delm)
 
 	if (!ptr)
 	{
-		printf("Error\n");
+		dprintf(STDERR_FILENO, "Error allocating memory \n");
 		return (0);
 	}
 
@@ -41,9 +41,10 @@ char **_strtok(char *line, char *delm)
 		{
 			for (i -= 1; i >= 0; i--)
 				free(ptr[i]);
+			free(ptr);
 			exit(99);
 		}
-		strcpy(ptr[i], tok);
+		_strcpy(ptr[i], tok);
 		tok = strtok(NULL, delm);
 	}
 	ptr[i] = NULL;

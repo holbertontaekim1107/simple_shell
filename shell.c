@@ -22,20 +22,28 @@ void sigint_handle(int sig);
 int main(int argc, char *argv[], char *envp[])
 {
 	size_t n = 1;
-	char *buff = malloc(1), **tok, *path = envp[8] + 5, **ptok;
-	int runs = 1, i, tmp;
+	char *buff = malloc(1), **tok, *path = malloc(_strlen(envp[8] + 5)),
+		**ptok;
+	int runs = 1, tmp;
 	/*When not mallocing, getline alloced too much space. Rely on realloc*/
 	(void)argc;
 	/*Set SIGINT to default to be caught by the handler*/
 	signal(SIGINT, sigint_handle);
 
+	_strcpy(path, envp[8] + 5);
 	ptok = _strtok(path, ":");
 	while (1)/*Always true unless exit sent to prompt*/
 	{
 		if (isatty(STDIN_FILENO))
 			write(1, "$ ", 2);
 		if (getline(&buff, &n, stdin) == EOF)
+		{
+			free(path);
+			free_all(ptok);
+			if (buff)
+				free(buff);
 			return (0);
+		}
 /*If buff is small, getline reallocs*/
 		if (!buff)
 			dprintf(STDERR_FILENO, NOMEM), exit(97);
@@ -45,7 +53,9 @@ int main(int argc, char *argv[], char *envp[])
 		if (!_strcmp(tok[0], "exit"))
 		{
 			free(buff);
-			if (_atoi(tok[1]) > 0)
+			free(path);
+			free_all(ptok);
+			if (tok[1] != NULL && _atoi(tok[1]) > 0)
 			{
 				tmp = _atoi(tok[1]);
 				free_all(tok);
@@ -59,11 +69,8 @@ int main(int argc, char *argv[], char *envp[])
 		}
 		path_check(&runs, tok, envp, argv, ptok);
 		runs++;
+		free_all(tok);
 	}
-	free(buff);
-	for (i = 0; tok[i]; i++)
-		free(tok[i]);
-	free(tok);
 	return (0);
 }
 /**
@@ -94,7 +101,7 @@ int fork_exe(char **tok, char **envp)
 	if (pid == 0)
 	{
 		e = execve(tok[0], tok, envp);
-		exit(-1);
+		exit(e);
 	}
 	else if (pid == -1)
 		dprintf(STDERR_FILENO, FAILFORK), exit(99);
@@ -120,6 +127,8 @@ void free_all(char **s)
 {
 	int i = 0;
 
+	if (s == NULL)
+		return;
 	for (; s[i]; i++)
 		free(s[i]);
 	free(s);
@@ -171,5 +180,6 @@ int path_check(int *runs, char **tok, char **envp, char **argv, char **pathTok)
 			dprintf(STDERR_FILENO, "%s: %d: %s: not found\n",
 				argv[0], *runs++, fname);
 	}
+	free(fname);
 	return (0);
 }
