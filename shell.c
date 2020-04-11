@@ -6,10 +6,11 @@
 #define NOMEM ("Error: Failed to allocate memory\n")
 #define FAILFORK ("Error creating fork\n")
 
-int _atoi(char *s);
-int fork_exe(pid_t pid, int *runs, char **tok, char **argv, char **envp);
+int path_check(int *runs, char **tok, char **envp, char **argv,
+	       char **pathTok);
+void free_all(char **s);
+int fork_exe(char **tok, char **envp);
 void sigint_handle(int sig);
-int _strcmp(char *s1, char *s2);
 /**
  * main - A simple shell program
  * @argc: Argument count
@@ -21,20 +22,28 @@ int _strcmp(char *s1, char *s2);
 int main(int argc, char *argv[], char *envp[])
 {
 	size_t n = 1;
-	char *buff = malloc(1), **tok;
-	int runs = 1, i;
-	pid_t pid;
+	char *buff = malloc(1), **tok, *path = malloc(_strlen(envp[8] + 5)),
+		**ptok;
+	int runs = 1, tmp, p = 0;
 	/*When not mallocing, getline alloced too much space. Rely on realloc*/
 	(void)argc;
 	/*Set SIGINT to default to be caught by the handler*/
 	signal(SIGINT, sigint_handle);
 
+	_strcpy(path, envp[8] + 5);
+	ptok = _strtok(path, ":");
 	while (1)/*Always true unless exit sent to prompt*/
 	{
 		if (isatty(STDIN_FILENO))
 			write(1, "$ ", 2);
 		if (getline(&buff, &n, stdin) == EOF)
+		{
+			free(path);
+			free_all(ptok);
+			if (buff)
+				free(buff);
 			return (0);
+		}
 /*If buff is small, getline reallocs*/
 		if (!buff)
 			dprintf(STDERR_FILENO, NOMEM), exit(97);
@@ -43,36 +52,26 @@ int main(int argc, char *argv[], char *envp[])
 		tok = _strtok(buff, " ");
 		if (!_strcmp(tok[0], "exit"))
 		{
-			if (_atoi(tok[1]) > 0)
-				exit(_atoi(tok[1]));
+			free(buff);
+			free(path);
+			free_all(ptok);
+			if (tok[1] != NULL && _atoi(tok[1]) > 0)
+			{
+				tmp = _atoi(tok[1]);
+				free_all(tok);
+				exit(tmp);
+			}
 			else
-				return (0);
+			{
+				free_all(tok);
+				return (p);
+			}
 		}
-		pid = fork();
-		fork_exe(pid, &runs, tok, argv, envp);
+		p = path_check(&runs, tok, envp, argv, ptok);
 		runs++;
+		free_all(tok);
 	}
-	free(buff);
-	free(tok);
 	return (0);
-}
-/**
- * _strcmp - compares two strings
- *@s1: string 1 to be compared
- *@s2: string 2 to be compared
- * Return: a positive, negative, or 0 number based on the first different char
- */
-int _strcmp(char *s1, char *s2)
-{
-	while ((*s1 != '\0' && *s2 != '\0') && *s1 == *s2)
-	{
-		s1++;
-		s2++;
-	}
-	if (*s1 == *s2)
-		return (0);
-	else
-		return (*s1 - *s2);
 }
 /**
  * sigint_handle - a signal handler for sigint
@@ -89,28 +88,20 @@ void sigint_handle(int sig)
 }
 /**
  * fork_exe - performs an action based on fork pid
- * @pid: pid currently on
- * @runs: number of runs in the shell for error messages
  * @tok: An array of strings containing the tokens
- * @argv: Used for the file name at argv[0]
  * @envp: Program environment
  *
  * Return: 0
  */
-int fork_exe(pid_t pid, int *runs, char **tok, char **argv, char **envp)
+int fork_exe(char **tok, char **envp)
 {
 	int e = 0, status;
-	pid_t w;
+	pid_t pid = fork(), w;
 
 	if (pid == 0)
 	{
 		e = execve(tok[0], tok, envp);
-		if (e == -1)
-		{
-			printf("%s: %d: %s: not found\n", argv[0],
-			       *runs++, tok[0]);
-		}
-		return (0);
+		exit(e);
 	}
 	else if (pid == -1)
 		dprintf(STDERR_FILENO, FAILFORK), exit(99);
@@ -121,49 +112,78 @@ int fork_exe(pid_t pid, int *runs, char **tok, char **argv, char **envp)
 			if (w == -1)
 				perror("Error at waitpid\n"), exit(99);
 		} while (!WIFEXITED(status) && !WIFSIGNALED(status));
+		if (WEXITSTATUS(status) == 255)
+			return (-1);
 	}
 	return (0);
 }
 /**
- * _atoi - converts a string to an integer
- *@s: string to be converted
- * Return: the number after conversion, or 0
+ * free_all - frees a char **
+ * @s: char ** to be freed
+ *
+ * Return: void
  */
-int _atoi(char *s)
+void free_all(char **s)
 {
-	int i = 0, j, n1, n2, neg = 1, flag = 0;
-	unsigned int sum = 0;
+	int i = 0;
 
 	if (s == NULL)
-		return (-1);
-	while (s[i] != '\0')
-		i++;
-	for (j = 0, n1 = 0, n2 = 0; j <= i; j++)
-	{
-		if (s[j] == '-')
+		return;
+	for (; s[i]; i++)
+		free(s[i]);
+	free(s);
+}
+/**
+ * path_check - determines if program needs to check the path, then checks
+ * @runs: Number of runs for the program
+ * @tok: tokenized input
+ * @envp: program environment
+ * @argv: argument vector
+ * @pathTok: Tokenized path
+ *
+ * Return: Always 0
+ */
+int path_check(int *runs, char **tok, char **envp, char **argv, char **pathTok)
+{
+	char *path, *fname = malloc(_strlen(tok[0]));
+	int i, sflag = 0, e;
+
+	_strcpy(fname, tok[0]);
+	for (i = 0; tok[0][i]; i++)
+		if (tok[0][i] == '/')
 		{
-			neg *= -1;
-			continue;
-		}
-		else if (s[j] == '+')
-		{
-			continue;
-		}
-		else if ((s[j] >= '0') && (s[j] <= '9'))
-		{
-			if (n1 > n2)
-			{
-				sum *= 10;
-				n2 = n1;
-			}
-			sum += s[j] - '0';
-			flag = 1;
-			n1++;
-		}
-		else if (s[j] == ' ')
-			continue;
-		else if ((flag == 1) && (!(s[j] >= '0') || !(s[j] <= '9')))
+			sflag = 1;
 			break;
+		}
+	if (sflag == 1)
+		e = fork_exe(tok, envp);
+	else
+	{
+		for (i = 0; pathTok[i]; i++)
+		{
+			path = malloc((_strlen(pathTok[i]) + _strlen(tok[0])
+				       + 1) * sizeof(char));
+			if (path == NULL)
+				perror(NOMEM);
+			_strcpy(path, pathTok[i]);
+			path[_strlen(path)] = '/';
+			_strcpy(path + _strlen(pathTok[i]) + 1, fname);
+			free(tok[0]);
+			tok[0] = path;
+			e = fork_exe(tok, envp);
+			if (e == 0)
+				break;
+			if (e == -1)
+				continue;
+		}
+		if (!pathTok[i])
+		{
+			dprintf(STDERR_FILENO, "%s: %d: %s: not found\n",
+				argv[0], *runs++, fname);
+			free(fname);
+			return (127);
+		}
 	}
-	return (sum * neg);
+	free(fname);
+	return (0);
 }

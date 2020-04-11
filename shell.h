@@ -7,5 +7,13 @@
 #include <signal.h>
 char **_strtok(char *line, char *delm);
 
+int _strcmp(char *s1, char *s2);
+
+int _strlen(char *s);
+
+void _strcpy(char *dest, char *src);
+
+int _atoi(char *s);
+
 ssize_t _getline(char **lineptr, size_t *n, FILE *stream);
 #endif
