@@ -38,6 +38,7 @@ int main(int argc, char *argv[], char *envp[])
 			write(1, "$ ", 2);
 		if (getline(&buff, &n, stdin) == EOF)
 		{
+			write(1, "\n", 1);
 			free(path);
 			free_all(ptok);
 			if (buff)
@@ -47,10 +48,10 @@ int main(int argc, char *argv[], char *envp[])
 /*If buff is small, getline reallocs*/
 		if (!buff)
 			dprintf(STDERR_FILENO, NOMEM), exit(97);
-		if (!_strcmp(buff, ""))
+		if (!_strcmp(buff, ""))/*If string is empty, go again*/
 			continue;
 		tok = _strtok(buff, " ");
-		if (!_strcmp(tok[0], "exit"))
+		if (!_strcmp(tok[0], "exit"))/*exit builtin with(out) args*/
 		{
 			free(buff);
 			free(path);
