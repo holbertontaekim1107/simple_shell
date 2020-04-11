@@ -24,7 +24,7 @@ int main(int argc, char *argv[], char *envp[])
 	size_t n = 1;
 	char *buff = malloc(1), **tok, *path = malloc(_strlen(envp[8] + 5)),
 		**ptok;
-	int runs = 1, tmp;
+	int runs = 1, tmp, p = 0;
 	/*When not mallocing, getline alloced too much space. Rely on realloc*/
 	(void)argc;
 	/*Set SIGINT to default to be caught by the handler*/
@@ -64,10 +64,10 @@ int main(int argc, char *argv[], char *envp[])
 			else
 			{
 				free_all(tok);
-				return (0);
+				return (p);
 			}
 		}
-		path_check(&runs, tok, envp, argv, ptok);
+		p = path_check(&runs, tok, envp, argv, ptok);
 		runs++;
 		free_all(tok);
 	}
@@ -177,8 +177,12 @@ int path_check(int *runs, char **tok, char **envp, char **argv, char **pathTok)
 				continue;
 		}
 		if (!pathTok[i])
+		{
 			dprintf(STDERR_FILENO, "%s: %d: %s: not found\n",
 				argv[0], *runs++, fname);
+			free(fname);
+			return (127);
+		}
 	}
 	free(fname);
 	return (0);
