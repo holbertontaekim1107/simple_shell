@@ -1,0 +1,69 @@
+int shell_env(char **args, char __attribute__((__unused__)) **head);
+int shell_setenv(char **args, char __attribute__((__unused__)) **head);
+
+/**
+ * shell_env - Prints current env
+ * @args: Array of args passed to shell
+ * @head: Double pointer to head of args
+ * Return: 0 Success, -1 otherwise
+ */
+
+int shell_env(char **args, char __attribute__((__unused__)) **head)
+{
+	int i;
+	char nc = '\n';
+
+	if (!environ)
+		return (-1);
+
+	for (i = 0; environ[i]; i++)
+	{
+		write(STDOUT_FILENO, environ[i], _strlen(environ[i]));
+		write(STDOUT_FILENO, &nc, 1);
+	}
+
+	(void)args;
+	return (0);
+}
+
+/**
+ * shell_setenv - Change or adds env variables to the PATH
+ * @args: Array of args passed to shell
+ * @head: Double pointer to the head of args
+ * Return: 0 Success, -1 otherwise
+ */
+int shell_setenv(char **args, char __attribute__((__unused__)) **head)
+{
+	char **env_var = NULL, **nenv, *nval; /* nenv=  new env, nval= new value */
+	size_t s; /* size */
+	int i; /* index */
+
+	nval = malloc(_strlen(args[0]) + 1 + _strlen(args[1]) + 1);
+
+	_strcpy(nval, args[0]);
+	_strcat(nval, "=");
+	_strcat(nval, args[1]);
+
+	env_var = _getenv(args[0]);
+	if (env_var)
+	{
+		free(*env_var);
+		*env_var = nval;
+		return (0);
+	}
+	for (s = 0; environ[s]; s++)
+		;
+
+	nenv = malloc(sizeof(char *) * (size + 2));
+
+	for (i = 0; environ[i]; i++)
+		nenv[i] = environ[i];
+
+	free(environ);
+	environ = nenv;
+	environ[i] = nval;
+	environ[i + 1] = NULL;
+
+	return (0);
+}
+
