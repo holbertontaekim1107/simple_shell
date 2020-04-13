@@ -72,6 +72,13 @@ int shell_setenv(char **args, char __attribute__((__unused__)) **head)
 	return (0);
 }
 
+/**
+ * shell_unset_env - Deleting env var from PATH
+ * @args: Array of args passed to shell
+ * @head: Doublt pointer to head of args
+ * Return: 0 Success, -1 Error
+ */
+
 int shell_unset_env(char **args, char __attribute__((__unused__)) **head)
 {
 	char **env_var, **nenv;
@@ -91,6 +98,7 @@ int shell_unset_env(char **args, char __attribute__((__unused__)) **head)
 	{
 		if (*env_var == environ[i])
 		{
+			free(env_var);
 			continue;
 		}
 		nenv[si] = environ[i];
