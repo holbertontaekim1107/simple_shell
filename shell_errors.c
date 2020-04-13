@@ -1,11 +1,12 @@
 #include "shell.h"
 
-int nlen(int num)
+int nlen(int num);
 char *my_itoa(int num);
 
 /**
- *
- *
+ * nlen - Counts length of the number
+ * @num: Measured number
+ * Return: Digit's length
  */
 
 int nlen(num)
@@ -47,7 +48,7 @@ char *my_itoa(int num)
 	length = nlen(num);
 	buff = malloc(sizeof(char) * (length + 1);
 
-	if(!buffer)
+	if(!buff)
 	{
 		return (NULL);
 	}
