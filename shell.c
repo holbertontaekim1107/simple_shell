@@ -1,6 +1,7 @@
 #include "shell.h"
 #include <sys/wait.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <string.h>
 
 #define NOMEM ("Error: Failed to allocate memory\n")
@@ -9,7 +10,7 @@
 int path_check(int *runs, char **tok, char **envp, char **argv,
 	       char **pathTok);
 void free_all(char **s);
-int fork_exe(char **tok, char **envp);
+int fork_exe(char **tok, char **envp, char *fname);
 void sigint_handle(int sig);
 /**
  * main - A simple shell program
@@ -53,7 +54,7 @@ int main(int argc, char *argv[], char *envp[])
 		}
 /*If buff is small, getline reallocs*/
 		if (!buff)
-			dprintf(STDERR_FILENO, NOMEM), exit(97);
+			write(2, NOMEM, _strlen(NOMEM)), exit(97);
 		while (*(buff + j) == ' ')
 			j++;
 		if (!_strcmp(buff + j, "\n"))
@@ -76,6 +77,12 @@ int main(int argc, char *argv[], char *envp[])
 				return (p);
 			}
 		}
+		else if (!_strcmp(tok[0], "cd"))
+		{
+			cd(tok[1]);
+			runs++;
+			continue;
+		}
 		p = path_check(&runs, tok, envp, argv, ptok);
 		runs++;
 		free_all(tok);
@@ -92,34 +99,34 @@ void sigint_handle(int sig)
 {
 	(void)sig;
 	signal(SIGINT, sigint_handle);
-	printf("\n$ ");
+	write(1, "\n$ ", 3);
 	fflush(stdout);
 }
 /**
  * fork_exe - performs an action based on fork pid
  * @tok: An array of strings containing the tokens
  * @envp: Program environment
- *
+ * @fname: Filename for error messages
  * Return: 0
  */
-int fork_exe(char **tok, char **envp)
+int fork_exe(char **tok, char **envp, char *fname)
 {
 	int e = 0, status;
-	pid_t pid = fork(), w;
+	pid_t pid = fork();
 
 	if (pid == 0)
 	{
 		e = execve(tok[0], tok, envp);
+		perror(fname);
 		exit(e);
 	}
 	else if (pid == -1)
-		dprintf(STDERR_FILENO, FAILFORK), exit(99);
+		write(2, FAILFORK, _strlen(FAILFORK)), exit(99);
 	else
 	{
 		do {
-			w = waitpid(pid, &status, WUNTRACED | WCONTINUED);
-			if (w == -1)
-				perror("Error at waitpid\n"), exit(99);
+			if (waitpid(pid, &status, WUNTRACED | WCONTINUED) == -1)
+				perror("waitpid"), exit(99);
 		} while (!WIFEXITED(status) && !WIFSIGNALED(status));
 		if (WEXITSTATUS(status) == 255)
 			return (-1);
@@ -154,10 +161,13 @@ void free_all(char **s)
  */
 int path_check(int *runs, char **tok, char **envp, char **argv, char **pathTok)
 {
-	char *path, *fname = malloc(_strlen(tok[0]));
-	int i, sflag = 0, e;
+	char *path, *fname = malloc(_strlen(argv[0] + 2));
+	struct stat *buf = malloc(sizeof(struct stat *));
+	int i, sflag = 0, e = -1;
 
-	_strcpy(fname, tok[0]);
+	if (fname == NULL || buf == NULL)
+		write(2, NOMEM, _strlen(NOMEM)), exit(99);
+	_strcpy(fname, argv[0] + 2);
 	for (i = 0; tok[0][i]; i++)
 		if (tok[0][i] == '/')
 		{
@@ -165,7 +175,7 @@ int path_check(int *runs, char **tok, char **envp, char **argv, char **pathTok)
 			break;
 		}
 	if (sflag == 1)
-		e = fork_exe(tok, envp);
+		e = fork_exe(tok, envp, fname);
 	else
 	{
 		for (i = 0; pathTok[i]; i++)
@@ -173,13 +183,14 @@ int path_check(int *runs, char **tok, char **envp, char **argv, char **pathTok)
 			path = malloc((_strlen(pathTok[i]) + _strlen(tok[0])
 				       + 1) * sizeof(char));
 			if (path == NULL)
-				perror(NOMEM);
+				write(2, NOMEM, _strlen(NOMEM)), exit(99);
 			_strcpy(path, pathTok[i]);
 			path[_strlen(path)] = '/';
 			_strcpy(path + _strlen(pathTok[i]) + 1, fname);
 			free(tok[0]);
 			tok[0] = path;
-			e = fork_exe(tok, envp);
+			if (!stat(tok[0], buf))
+				e = fork_exe(tok, envp, fname);
 			if (e == 0)
 				break;
 			if (e == -1)
@@ -187,12 +198,15 @@ int path_check(int *runs, char **tok, char **envp, char **argv, char **pathTok)
 		}
 		if (!pathTok[i])
 		{
-			dprintf(STDERR_FILENO, "%s: %d: %s: not found\n",
-				argv[0], *runs++, fname);
+			stat(tok[0], buf);
+			perror(fname);
 			free(fname);
+			free(buf);
 			return (127);
 		}
 	}
+	runs++;
+	free(buf);
 	free(fname);
 	return (0);
 }
