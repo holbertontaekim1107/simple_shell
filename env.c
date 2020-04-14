@@ -1,6 +1,6 @@
 int shell_env(char **args, char __attribute__((__unused__)) **head);
 int shell_setenv(char **args, char __attribute__((__unused__)) **head);
-int shell_unset_env(char **args, char __attribute__((__unused__)) **head)
+int shell_unset_env(char **args, char __attribute__((__unused__)) **head);
 
 /**
  * shell_env - Prints current env
