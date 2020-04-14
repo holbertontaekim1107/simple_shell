@@ -13,6 +13,8 @@ int _strlen(char *s);
 
 void _strcpy(char *dest, char *src);
 
+int _strncmp(char *s1, char *s2, int n);
+
 int _atoi(char *s);
 
 ssize_t _getline(char **lineptr, size_t *n, FILE *stream);
