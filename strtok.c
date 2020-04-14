@@ -1,6 +1,7 @@
 #include "shell.h"
 #include <string.h>
 
+#define NOMEM ("Error allocating memory")
 /**
  * _strtok - calls strtok on a string
  * @line: string to call on
@@ -28,7 +29,7 @@ char **_strtok(char *line, char *delm)
 
 	if (!ptr)
 	{
-		dprintf(STDERR_FILENO, "Error allocating memory \n");
+		write(2, NOMEM, _strlen(NOMEM));
 		return (0);
 	}
 
