@@ -22,22 +22,29 @@ void sigint_handle(int sig);
 int main(int argc, char *argv[], char *envp[])
 {
 	size_t n = 1;
-	char *buff = malloc(1), **tok, *path = malloc(_strlen(envp[8] + 5)),
+	char *buff = malloc(1), **tok, *path,
 		**ptok;
-	int runs = 1, tmp, p = 0;
+	int runs = 1, tmp, p = 0, j;
 	/*When not mallocing, getline alloced too much space. Rely on realloc*/
 	(void)argc;
 	/*Set SIGINT to default to be caught by the handler*/
 	signal(SIGINT, sigint_handle);
 
-	_strcpy(path, envp[8] + 5);
+	buff[0] = '\0';
+	for (j = 0; _strncmp(envp[j], "PATH=", 4); j++)
+		;
+	path = malloc(_strlen(envp[j] + 5));
+	_strcpy(path, envp[j] + 5);
 	ptok = _strtok(path, ":");
 	while (1)/*Always true unless exit sent to prompt*/
 	{
+		j = 0;
 		if (isatty(STDIN_FILENO))
 			write(1, "$ ", 2);
 		if (getline(&buff, &n, stdin) == EOF)
 		{
+			if (isatty(STDIN_FILENO))
+				write(1, "\n", 1);
 			free(path);
 			free_all(ptok);
 			if (buff)
@@ -47,10 +54,12 @@ int main(int argc, char *argv[], char *envp[])
 /*If buff is small, getline reallocs*/
 		if (!buff)
 			dprintf(STDERR_FILENO, NOMEM), exit(97);
-		if (!_strcmp(buff, ""))
+		while (*(buff + j) == ' ')
+			j++;
+		if (!_strcmp(buff + j, "\n"))
 			continue;
 		tok = _strtok(buff, " ");
-		if (!_strcmp(tok[0], "exit"))
+		if (!_strcmp(tok[0], "exit"))/*exit builtin with(out) args*/
 		{
 			free(buff);
 			free(path);
