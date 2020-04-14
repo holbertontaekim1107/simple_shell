@@ -2,6 +2,7 @@
 
 /**
  * cd - builtin to change directories
+ * @path: path of directory to switch to
  *
  * Return: Always 0 (ok)
  */
