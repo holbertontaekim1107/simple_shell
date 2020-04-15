@@ -67,6 +67,7 @@ int main(int argc, char *argv[], char *envp[])
 			break;
 		runs++;
 		free_all(tok);
+		tok = NULL;
 	}
 	if (buff)
 		free(buff);
@@ -74,17 +75,18 @@ int main(int argc, char *argv[], char *envp[])
 		free(path);
 	if (ptok)
 		free_all(ptok);
-	if (!_strcmp(tok[0], "exit"))
-	{
-		if (tok[1] != NULL)
+	if (tok)
+		if (!_strcmp(tok[0], "exit"))
 		{
-			tmp = _atoi(tok[1]);
-			free_all(tok);
-			return (tmp);
+			if (tok[1] != NULL)
+			{
+				tmp = _atoi(tok[1]);
+				free_all(tok);
+				return (tmp);
+			}
+			else
+				free_all(tok);
 		}
-		else
-			free_all(tok);
-	}
 	return (p);
 }
 /**
