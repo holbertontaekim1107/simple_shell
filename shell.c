@@ -23,18 +23,17 @@ void sigint_handle(int sig);
 int main(int argc, char *argv[], char *envp[])
 {
 	size_t n = 1;
-	char *buff = malloc(1), **tok, *path,
-		**ptok;
-	int runs = 1, tmp, p = 0, j;
-	/*When not mallocing, getline alloced too much space. Rely on realloc*/
+	char *buff = malloc(n), **tok = NULL,
+		*path = NULL, **ptok = NULL;
+	int runs = 1, tmp = 0, p = 0, j = 0;
+
 	(void)argc;
-	/*Set SIGINT to default to be caught by the handler*/
 	signal(SIGINT, sigint_handle);
 
 	buff[0] = '\0';
-	for (j = 0; _strncmp(envp[j], "PATH=", 4); j++)
+	for (j = 0; envp[j] && _strncmp(envp[j], "PATH=", 4); j++)
 		;
-	path = malloc(_strlen(envp[j] + 5));
+	path = malloc(_strlen(envp[j] + 5) + 1);
 	_strcpy(path, envp[j] + 5);
 	ptok = _strtok(path, ":");
 	while (1)/*Always true unless exit sent to prompt*/
@@ -46,13 +45,8 @@ int main(int argc, char *argv[], char *envp[])
 		{
 			if (isatty(STDIN_FILENO))
 				write(1, "\n", 1);
-			free(path);
-			free_all(ptok);
-			if (buff)
-				free(buff);
-			return (0);
+			break;
 		}
-/*If buff is small, getline reallocs*/
 		if (!buff)
 			write(2, NOMEM, _strlen(NOMEM)), exit(97);
 		while (*(buff + j) == ' ')
@@ -61,22 +55,7 @@ int main(int argc, char *argv[], char *envp[])
 			continue;
 		tok = _strtok(buff, " ");
 		if (!_strcmp(tok[0], "exit"))/*exit builtin with(out) args*/
-		{
-			free(buff);
-			free(path);
-			free_all(ptok);
-			if (tok[1] != NULL && _atoi(tok[1]) > 0)
-			{
-				tmp = _atoi(tok[1]);
-				free_all(tok);
-				exit(tmp);
-			}
-			else
-			{
-				free_all(tok);
-				return (p);
-			}
-		}
+			break;
 		else if (!_strcmp(tok[0], "cd"))
 		{
 			cd(tok[1]);
@@ -84,10 +63,29 @@ int main(int argc, char *argv[], char *envp[])
 			continue;
 		}
 		p = path_check(&runs, tok, envp, argv, ptok);
+		if (p == -229)
+			break;
 		runs++;
 		free_all(tok);
 	}
-	return (0);
+	if (buff)
+		free(buff);
+	if (path)
+		free(path);
+	if (ptok)
+		free_all(ptok);
+	if (!_strcmp(tok[0], "exit"))
+	{
+		if (tok[1] != NULL)
+		{
+			tmp = _atoi(tok[1]);
+			free_all(tok);
+			return (tmp);
+		}
+		else
+			free_all(tok);
+	}
+	return (p);
 }
 /**
  * sigint_handle - a signal handler for sigint
@@ -159,13 +157,20 @@ void free_all(char **s)
  */
 int path_check(int *runs, char **tok, char **envp, char **argv, char **pathTok)
 {
-	char *path, *fname = malloc(_strlen(argv[0] + 2));
-	char *cname = malloc(_strlen(tok[0]));
+	char *path, *fname = malloc(_strlen(argv[0] + 2) + 1);
+	char *cname = malloc(_strlen(tok[0]) + 1);
 	struct stat buf;
 	int i, sflag = 0;
 
 	if (fname == NULL || cname == NULL)
-		write(2, NOMEM, _strlen(NOMEM)), exit(99);
+	{
+		if (fname)
+			free(fname);
+		if (cname)
+			free(cname);
+		write(2, NOMEM, _strlen(NOMEM));
+		return (-229);
+	}
 	_strcpy(fname, argv[0] + 2);
 	_strcpy(cname, tok[0]);
 	for (i = 0; tok[0][i]; i++)
@@ -184,7 +189,7 @@ int path_check(int *runs, char **tok, char **envp, char **argv, char **pathTok)
 		for (i = 0; pathTok[i]; i++)
 		{
 			path = malloc((_strlen(pathTok[i]) + _strlen(tok[0])
-				       + 1) * sizeof(char));
+				       + 1 + 1) * sizeof(char));
 			if (path == NULL)
 				write(2, NOMEM, _strlen(NOMEM)), exit(99);
 			_strcpy(path, pathTok[i]);
@@ -203,10 +208,12 @@ int path_check(int *runs, char **tok, char **envp, char **argv, char **pathTok)
 			stat(tok[0], &buf);
 			perror(fname);
 			free(fname);
+			free(cname);
 			return (127);
 		}
 	}
 	runs++;
 	free(fname);
+	free(cname);
 	return (0);
 }

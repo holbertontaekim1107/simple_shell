@@ -16,6 +16,8 @@ char **_strtok(char *line, char *delm)
 	int i;
 	size_t words = 0;
 
+	if (line == NULL || delm == NULL)
+		return (NULL);
 	for (i = 0; line[i]; i++)
 	{
 		if (line[i] != *delm && (line[i + 1] == *delm ||
@@ -24,9 +26,7 @@ char **_strtok(char *line, char *delm)
 	}
 	if (line[i - 1] == '\n')
 		line[i - 1] = '\0';
-
 	ptr = malloc(sizeof(char *) * (words + 1));
-
 	if (!ptr)
 	{
 		write(2, NOMEM, _strlen(NOMEM));
