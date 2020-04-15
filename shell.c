@@ -106,7 +106,6 @@ void sigint_handle(int sig)
  * fork_exe - performs an action based on fork pid
  * @tok: An array of strings containing the tokens
  * @envp: Program environment
- * @fname: Filename for error messages
  * Return: 0
  */
 int fork_exe(char **tok, char **envp)
