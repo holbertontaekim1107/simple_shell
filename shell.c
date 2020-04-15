@@ -10,7 +10,7 @@
 int path_check(int *runs, char **tok, char **envp, char **argv,
 	       char **pathTok);
 void free_all(char **s);
-int fork_exe(char **tok, char **envp, char *fname);
+int fork_exe(char **tok, char **envp);
 void sigint_handle(int sig);
 /**
  * main - A simple shell program
@@ -109,7 +109,7 @@ void sigint_handle(int sig)
  * @fname: Filename for error messages
  * Return: 0
  */
-int fork_exe(char **tok, char **envp, char *fname)
+int fork_exe(char **tok, char **envp)
 {
 	int e = 0, status;
 	pid_t pid = fork();
@@ -117,7 +117,6 @@ int fork_exe(char **tok, char **envp, char *fname)
 	if (pid == 0)
 	{
 		e = execve(tok[0], tok, envp);
-		perror(fname);
 		exit(e);
 	}
 	else if (pid == -1)
@@ -162,12 +161,14 @@ void free_all(char **s)
 int path_check(int *runs, char **tok, char **envp, char **argv, char **pathTok)
 {
 	char *path, *fname = malloc(_strlen(argv[0] + 2));
-	struct stat *buf = malloc(sizeof(struct stat *));
-	int i, sflag = 0, e = -1;
+	char *cname = malloc(_strlen(tok[0]));
+	struct stat buf;
+	int i, sflag = 0;
 
-	if (fname == NULL || buf == NULL)
+	if (fname == NULL || cname == NULL)
 		write(2, NOMEM, _strlen(NOMEM)), exit(99);
 	_strcpy(fname, argv[0] + 2);
+	_strcpy(cname, tok[0]);
 	for (i = 0; tok[0][i]; i++)
 		if (tok[0][i] == '/')
 		{
@@ -175,7 +176,10 @@ int path_check(int *runs, char **tok, char **envp, char **argv, char **pathTok)
 			break;
 		}
 	if (sflag == 1)
-		e = fork_exe(tok, envp, fname);
+	{
+		if (fork_exe(tok, envp) != 0)
+			perror(fname);
+	}
 	else
 	{
 		for (i = 0; pathTok[i]; i++)
@@ -186,27 +190,24 @@ int path_check(int *runs, char **tok, char **envp, char **argv, char **pathTok)
 				write(2, NOMEM, _strlen(NOMEM)), exit(99);
 			_strcpy(path, pathTok[i]);
 			path[_strlen(path)] = '/';
-			_strcpy(path + _strlen(pathTok[i]) + 1, fname);
+			_strcpy(path + _strlen(pathTok[i]) + 1, cname);
 			free(tok[0]);
 			tok[0] = path;
-			if (!stat(tok[0], buf))
-				e = fork_exe(tok, envp, fname);
-			if (e == 0)
+			if (!stat(tok[0], &buf))
+			{
+				fork_exe(tok, envp);
 				break;
-			if (e == -1)
-				continue;
+			}
 		}
 		if (!pathTok[i])
 		{
-			stat(tok[0], buf);
+			stat(tok[0], &buf);
 			perror(fname);
 			free(fname);
-			free(buf);
 			return (127);
 		}
 	}
 	runs++;
-	free(buf);
 	free(fname);
 	return (0);
 }
