@@ -37,7 +37,7 @@ char **_strtok(char *line, char *delm)
 
 	for (i = 0; tok != NULL; i++)
 	{
-		ptr[i] = malloc(strlen(tok) + 1);
+		ptr[i] = malloc(_strlen(tok) + 1);
 		if (!ptr[i])
 		{
 			for (i -= 1; i >= 0; i--)
