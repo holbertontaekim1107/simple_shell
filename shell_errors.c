@@ -1,7 +1,8 @@
 #include "shell.h"
 
-int nlen(int num);
-char *my_itoa(int num);
+int num_len(int num);
+char *_itoa(int num);
+int make_error(char **args, int x);
 
 /**
  * nlen - Counts length of the number
@@ -9,7 +10,7 @@ char *my_itoa(int num);
  * Return: Digit's length
  */
 
-int nlen(num)
+int num_len(num)
 {
 	int length;
 	unsigned int numb;
@@ -39,7 +40,7 @@ int nlen(num)
  * Return: String
  */
 
-char *my_itoa(int num)
+char *_itoa(int num)
 {
 	char *buff;
 	int length;
@@ -61,4 +62,21 @@ char *my_itoa(int num)
 	}
 	length--;
 	return(buff);
+}
+
+/**
+ *
+ *
+ *
+ */
+
+int make_error(**args, int x);
+{
+
+
+
+
+
+
+
 }
