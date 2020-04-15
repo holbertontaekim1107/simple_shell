@@ -23,18 +23,19 @@ char *env_error(char **args)
 	args--;
 	
 	length = _strlen(name) + _strlen(pstring) + _strlen(args[0] + 45;
-	eror = malloc(sizeof(char) * (length +1);
-
+	error = malloc(sizeof(char) * (length +1);
 	if(!error)
 	{
 		free(pstring);
 		return (NULL);
 	}
-	
 	_strcpy(error, name);
 	_strcat(error, ": ");
 	_strcat(error, pstring);
 	_strcat(error, ": ");
 	_strcat(error, args[0]);
 	_strcat(error, ": Cannot add or remove from environment");
-}	
+
+	free(pstring);
+	return (error);
+}
