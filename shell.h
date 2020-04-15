@@ -26,4 +26,7 @@ char **_getenv(const char *var);
 int nlen(int num);
 char *my_itoa(int num);
 
+extern char **environ;
+int hist;
+char *name;
 #endif
