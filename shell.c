@@ -23,8 +23,9 @@ void sigint_handle(int sig);
 int main(int argc, char *argv[], char *envp[])
 {
 	size_t n = 1;
-	char *buff = malloc(1), **tok, *path = NULL, **ptok;
-	int runs = 1, tmp, p = 0, j;
+	char *buff = malloc(n), **tok = NULL,
+		*path = NULL, **ptok = NULL;
+	int runs = 1, tmp = 0, p = 0, j = 0;
 
 	(void)argc;
 	signal(SIGINT, sigint_handle);
@@ -54,9 +55,7 @@ int main(int argc, char *argv[], char *envp[])
 			continue;
 		tok = _strtok(buff, " ");
 		if (!_strcmp(tok[0], "exit"))/*exit builtin with(out) args*/
-		{
-				break;
-		}
+			break;
 		else if (!_strcmp(tok[0], "cd"))
 		{
 			cd(tok[1]);
@@ -69,17 +68,23 @@ int main(int argc, char *argv[], char *envp[])
 		runs++;
 		free_all(tok);
 	}
-	free(buff);
-	free(path);
-	free_all(ptok);
+	if (buff)
+		free(buff);
+	if (path)
+		free(path);
+	if (ptok)
+		free_all(ptok);
 	if (!_strcmp(tok[0], "exit"))
-		if (_atoi(tok[1]))
+	{
+		if (tok[1] != NULL)
 		{
 			tmp = _atoi(tok[1]);
 			free_all(tok);
 			return (tmp);
 		}
-	free_all(tok);
+		else
+			free_all(tok);
+	}
 	return (p);
 }
 /**
@@ -163,10 +168,6 @@ int path_check(int *runs, char **tok, char **envp, char **argv, char **pathTok)
 			free(fname);
 		if (cname)
 			free(cname);
-		if (tok && *tok)
-			free_all(tok);
-		if (pathTok)
-			free(pathTok);
 		write(2, NOMEM, _strlen(NOMEM));
 		return (-229);
 	}
