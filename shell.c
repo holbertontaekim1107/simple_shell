@@ -10,7 +10,7 @@
 int path_check(int *runs, char **tok, char **envp, char **argv,
 	       char **pathTok);
 void free_all(char **s);
-int fork_exe(char **tok, char **envp);
+int fork_exe(char **tok, char **envp, char *fname);
 void sigint_handle(int sig);
 /**
  * main - A simple shell program
@@ -108,7 +108,7 @@ void sigint_handle(int sig)
  * @envp: Program environment
  * Return: 0
  */
-int fork_exe(char **tok, char **envp)
+int fork_exe(char **tok, char **envp, char *fname)
 {
 	int e = 0, status;
 	pid_t pid = fork();
@@ -116,6 +116,7 @@ int fork_exe(char **tok, char **envp)
 	if (pid == 0)
 	{
 		e = execve(tok[0], tok, envp);
+		perror(fname);
 		exit(e);
 	}
 	else if (pid == -1)
@@ -183,8 +184,7 @@ int path_check(int *runs, char **tok, char **envp, char **argv, char **pathTok)
 		}
 	if (sflag == 1)
 	{
-		if (fork_exe(tok, envp) != 0)
-			perror(fname);
+		fork_exe(tok, envp, fname);
 	}
 	else
 	{
@@ -201,14 +201,14 @@ int path_check(int *runs, char **tok, char **envp, char **argv, char **pathTok)
 			tok[0] = path;
 			if (!stat(tok[0], &buf))
 			{
-				fork_exe(tok, envp);
+				fork_exe(tok, envp, fname);
 				break;
 			}
 		}
 		if (!pathTok[i])
 		{
 			stat(tok[0], &buf);
-			perror(fname);
+			/*perror(fname);*/
 			free(fname);
 			free(cname);
 			return (127);
