@@ -31,7 +31,7 @@ int cd(char *path, char **envp)
 		path = home;
 	if (!_strcmp(path, "-"))
 		path = old;
-	o = opendie(path);
+	o = opendir(path);
 	if (o != NULL)
 	{
 		c = chdir(path);
