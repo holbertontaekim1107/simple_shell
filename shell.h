@@ -19,5 +19,5 @@ int _atoi(char *s);
 
 ssize_t _getline(char **lineptr, size_t *n, FILE *stream);
 
-int cd(char *path);
+int cd(char *path, char **envp);
 #endif

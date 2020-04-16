@@ -58,7 +58,7 @@ int main(int argc, char *argv[], char *envp[])
 			break;
 		else if (!_strcmp(tok[0], "cd"))
 		{
-			cd(tok[1]);
+			cd(tok[1], envp);
 			runs++;
 			free_all(tok);
 			continue;
