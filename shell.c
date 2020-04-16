@@ -60,6 +60,7 @@ int main(int argc, char *argv[], char *envp[])
 		{
 			cd(tok[1]);
 			runs++;
+			free_all(tok);
 			continue;
 		}
 		p = path_check(&runs, tok, envp, argv, ptok);
