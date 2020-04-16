@@ -106,6 +106,7 @@ void sigint_handle(int sig)
  * fork_exe - performs an action based on fork pid
  * @tok: An array of strings containing the tokens
  * @envp: Program environment
+ * @fname: Filename for errors
  * Return: 0
  */
 int fork_exe(char **tok, char **envp, char *fname)
@@ -195,6 +196,11 @@ int path_check(int *runs, char **tok, char **envp, char **argv, char **pathTok)
 			if (path == NULL)
 				write(2, NOMEM, _strlen(NOMEM)), exit(99);
 			_strcpy(path, pathTok[i]);
+			if (path[0] == '\0')
+			{
+				path[0] = '.';
+				printf("CHECK\n");
+			}
 			path[_strlen(path)] = '/';
 			_strcpy(path + _strlen(pathTok[i]) + 1, cname);
 			free(tok[0]);
@@ -208,7 +214,7 @@ int path_check(int *runs, char **tok, char **envp, char **argv, char **pathTok)
 		if (!pathTok[i])
 		{
 			stat(tok[0], &buf);
-			/*perror(fname);*/
+			perror(fname);
 			free(fname);
 			free(cname);
 			return (127);
