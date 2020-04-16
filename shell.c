@@ -211,11 +211,6 @@ int path_check(int *runs, char **tok, char **envp, char **argv, char **pathTok)
 			if (path == NULL)
 				write(2, NOMEM, _strlen(NOMEM)), exit(99);
 			_strcpy(path, pathTok[i]);
-			if (path[0] == '\0')
-			{
-				path[0] = '.';
-				printf("CHECK\n");
-			}
 			path[_strlen(path)] = '/';
 			_strcpy(path + _strlen(pathTok[i]) + 1, cname);
 			free(tok[0]);
