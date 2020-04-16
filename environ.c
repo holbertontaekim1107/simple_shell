@@ -5,9 +5,8 @@ void free_env(void);
 char **_getenv(const char *var);
 
 /**
- *
- *
- *
+ * _copyenv - Makes a copy of the env
+ * Return: Error = NULL, otherwise a double pointer to new copy
  */
 
 char **_copyenv(void)
@@ -42,8 +41,7 @@ char **_copyenv(void)
 }
 
 /**
- *
- *
+ * free_env - Frees environment copy
  */
 
 void free_env(void)
@@ -58,9 +56,9 @@ void free_env(void)
 }
 
 /**
- *
- * 
- *
+ * _getenv - Gets env var from PATH
+ * @var: Name of env var it gets
+ * Return: If env var doesnt exist = NULL, otherwise a pointer to env var
  */
 
 char **_getenv(const char *var)
