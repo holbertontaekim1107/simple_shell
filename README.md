@@ -5,7 +5,7 @@ A simple UNIX command interpreter written for a low-level programming project at
 **hsh** is a simple UNIX command language interpreter that takes commands from files or inputs and executes them.
 
 ## Invocation
-To use **hsh**: ** hsh** [filename]
+To use **hsh**: **hsh** [filename]
 In order to operate **hsh**, compile all the .c files in the master repository and run the executable: 
 
 	gcc *.c -o hsh
@@ -28,6 +28,7 @@ When **hsh** recieves a command, it will tokenize it into words. The first word 
 **hsh** will then proceed to execute the named program with any remaining given arguments.
 
 i.E:
+
 	Input: $./hsh
 	     : $ls
 	     : AUTHORS		Shell.c		README.md      	shell.h		_atoi.c
@@ -40,6 +41,7 @@ i.E:
 * If no argument is given to the prompt, the command is taken as exit 0, exiting the hsh.
 
 I.E
+
 	Input: $ exit
 	Output:vagrant@vagrant-ubuntu-trusty-64:~$
 
@@ -53,8 +55,9 @@ I.E
 
 ### Project contents
 
+| Filename | Short Description |
+| --- | --- |
 | **hsh** | Simple UNIX command interpreter written by Brett Davis & Tommy Kim |
-|** File Name **| ** Short Description **|
 | .gitignore|Prevents Autosave files from being uploaded|
 | AUTHORS   |Authors of this program|
 | _atoi.c   |Converts string to integer|
