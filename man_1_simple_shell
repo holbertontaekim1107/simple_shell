@@ -1,16 +1,105 @@
-NAME
-    The name of the command or function, followed by a one-line description of what it does.
-SYNOPSIS
-    In the case of a command, you get a formal description of how to run it and what command line options it takes.
-DESCRIPTION
-    A textual description of the functioning of the command or function.
-EXAMPLES
-    Some examples of common usage.
-SEE ALSO
-    A list of related commands or functions.
-BUGS
-    List known bugs.
-AUTHOR
-   Specify your contact information.
-COPYRIGHT
-    Specify your copyright information.
+.TH man 1 "16 April 2020" "0.4" "hsh(1) man page"
+.SH NAME
+hsh - holberton simple-shell
+.SH SYNOPSIS
+hsh [options and files are not currently supported, but planned to be implemented]
+.SH DESCRIPTION
+hsh is a command language interpreter compatible with standard bash files. Hsh executes commands read from stdin.
+.SH OPTIONS
+Hsh has two main operating options - interactive and non-interactive
+In interactive mode, hsh acts as a standard shell
+Interactive mode may be enabled by calling hsh as a program with no pipes or options
+In non-interactive mode, a command is piped into hsh, which is then interpreted as normal
+.SH hsh Builtin Commands
+.B exit 
+[
+.I status
+]
+
+Exits with code 
+.I status.
+If 
+.I status
+is negative, an error is sent to STDERR. If 
+.I status
+is not provided, exits with code 0.
+
+.B cd 
+[
+.I pathname
+]
+
+Changed the directory to the provided path. If 
+.I pathname
+is '~', '$HOME', or not provided, changed the directory to the user's home directory. If 
+.I pathname
+is not a valid path to a directory, an error is sent to STDERR and the change is not made.
+If 
+.I pathname
+is '-', changes directory to previous working directory
+
+.B env
+
+Prints the user's program environment
+
+.SH SEE ALSO
+.I BASH(1), sh(1), ksh(1), csh(1)
+.SH Files
+/simple_shell/hsh
+
+	The hsh executable
+
+/simple_shell/shell.c
+
+	The head shell file, performs the checks that determine what functions to call
+
+/simple_shell/_str.c
+
+	Contains the functions used to manipulate strings
+
+/simple_shell/strtok.c
+
+	Contains the driver function that uses strtok to tokenize strings
+
+/simple_shell/cd.c
+
+	Contains the functionality of the 'cd' builtin
+
+/simple_shell/_atoi.c
+
+	Used to convert string into integers
+
+.SH BUGS
+Compound commands are unable to be handled
+
+Comments are unable to be handled
+
+Aliases do not currently work
+
+When calling the cd builtin, cd - does not always go to $OLDPWD as intended
+
+When calling the cd builtin, $PWD and $OLDPWD are not updated, causing the above bug
+.SH Examples
+$ ls
+
+_atoi.c	AUTHORS	cd.c	hsh	man_1_simple_shell	shell.c	shell.h	_str.c	strtok.c
+
+$ cd ..
+
+$ ls
+
+simple_shell
+
+$ ^C
+
+$ ^C
+
+$ ^C
+
+$ exit 99
+
+echo $?
+
+99
+.SH AUTHOR
+Se Yong Kim, Brett Davis
