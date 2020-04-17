@@ -1,7 +1,9 @@
 #include "shell.h"
 #include <sys/wait.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <string.h>
+#include <errno.h>
 
 #define NOMEM ("Error: Failed to allocate memory\n")
 #define FAILFORK ("Error creating fork\n")
@@ -9,7 +11,7 @@
 int path_check(int *runs, char **tok, char **envp, char **argv,
 	       char **pathTok);
 void free_all(char **s);
-int fork_exe(char **tok, char **envp);
+int fork_exe(char **tok, char **envp, char *fname, int *ex);
 void sigint_handle(int sig);
 /**
  * main - A simple shell program
@@ -22,18 +24,17 @@ void sigint_handle(int sig);
 int main(int argc, char *argv[], char *envp[])
 {
 	size_t n = 1;
-	char *buff = malloc(1), **tok, *path,
-		**ptok;
-	int runs = 1, tmp, p = 0, j;
-	/*When not mallocing, getline alloced too much space. Rely on realloc*/
+	char *buff = malloc(n), **tok = NULL,
+		*path = NULL, **ptok = NULL;
+	int runs = 1, tmp = 0, p = 0, j = 0;
+
 	(void)argc;
-	/*Set SIGINT to default to be caught by the handler*/
 	signal(SIGINT, sigint_handle);
 
 	buff[0] = '\0';
-	for (j = 0; _strncmp(envp[j], "PATH=", 4); j++)
+	for (j = 0; envp[j] && _strncmp(envp[j], "PATH=", 4); j++)
 		;
-	path = malloc(_strlen(envp[j] + 5));
+	path = malloc(_strlen(envp[j] + 5) + 1);
 	_strcpy(path, envp[j] + 5);
 	ptok = _strtok(path, ":");
 	while (1)/*Always true unless exit sent to prompt*/
@@ -45,15 +46,10 @@ int main(int argc, char *argv[], char *envp[])
 		{
 			if (isatty(STDIN_FILENO))
 				write(1, "\n", 1);
-			free(path);
-			free_all(ptok);
-			if (buff)
-				free(buff);
-			return (0);
+			break;
 		}
-/*If buff is small, getline reallocs*/
 		if (!buff)
-			dprintf(STDERR_FILENO, NOMEM), exit(97);
+			write(2, NOMEM, _strlen(NOMEM)), exit(97);
 		while (*(buff + j) == ' ')
 			j++;
 		if (!_strcmp(buff + j, "\n"))
@@ -61,26 +57,47 @@ int main(int argc, char *argv[], char *envp[])
 		tok = _strtok(buff, " ");
 		if (!_strcmp(tok[0], "exit"))/*exit builtin with(out) args*/
 		{
-			free(buff);
-			free(path);
-			free_all(ptok);
-			if (tok[1] != NULL && _atoi(tok[1]) > 0)
+			if (tok[1] && _atoi(tok[1]) < 0)
+			{
+				write(2, argv[0], _strlen(argv[0]));
+				write(2, ": illegal number", 17);
+				continue;
+			}
+			break;
+		}
+		else if (!_strcmp(tok[0], "cd"))
+		{
+			cd(tok[1], envp);
+			runs++;
+			free_all(tok);
+			continue;
+		}
+		p = path_check(&runs, tok, envp, argv, ptok);
+		if (p == -229)
+			break;
+		runs++;
+		free_all(tok);
+		tok = NULL;
+	}
+	if (buff)
+		free(buff);
+	if (path)
+		free(path);
+	if (ptok)
+		free_all(ptok);
+	if (tok)
+		if (!_strcmp(tok[0], "exit"))
+		{
+			if (tok[1] != NULL)
 			{
 				tmp = _atoi(tok[1]);
 				free_all(tok);
-				exit(tmp);
+				return (tmp);
 			}
 			else
-			{
 				free_all(tok);
-				return (p);
-			}
 		}
-		p = path_check(&runs, tok, envp, argv, ptok);
-		runs++;
-		free_all(tok);
-	}
-	return (0);
+	return (p);
 }
 /**
  * sigint_handle - a signal handler for sigint
@@ -92,37 +109,42 @@ void sigint_handle(int sig)
 {
 	(void)sig;
 	signal(SIGINT, sigint_handle);
-	printf("\n$ ");
+	write(1, "\n$ ", 3);
 	fflush(stdout);
 }
 /**
  * fork_exe - performs an action based on fork pid
  * @tok: An array of strings containing the tokens
  * @envp: Program environment
- *
+ * @fname: Filename for errors
+ * @ex: pointer to the exit status
  * Return: 0
  */
-int fork_exe(char **tok, char **envp)
+int fork_exe(char **tok, char **envp, char *fname, int *ex)
 {
 	int e = 0, status;
-	pid_t pid = fork(), w;
+	pid_t pid = fork();
 
 	if (pid == 0)
 	{
 		e = execve(tok[0], tok, envp);
+		perror(fname);
+		if (errno == EACCES)
+			*ex = 126;
 		exit(e);
 	}
 	else if (pid == -1)
-		dprintf(STDERR_FILENO, FAILFORK), exit(99);
+		write(2, FAILFORK, _strlen(FAILFORK)), exit(99);
 	else
 	{
 		do {
-			w = waitpid(pid, &status, WUNTRACED | WCONTINUED);
-			if (w == -1)
-				perror("Error at waitpid\n"), exit(99);
+			if (waitpid(pid, &status, WUNTRACED | WCONTINUED) == -1)
+				perror("waitpid"), exit(99);
 		} while (!WIFEXITED(status) && !WIFSIGNALED(status));
 		if (WEXITSTATUS(status) == 255)
 			return (-1);
+		if (*ex != 0)
+			return (*ex);
 	}
 	return (0);
 }
@@ -154,10 +176,22 @@ void free_all(char **s)
  */
 int path_check(int *runs, char **tok, char **envp, char **argv, char **pathTok)
 {
-	char *path, *fname = malloc(_strlen(tok[0]));
-	int i, sflag = 0, e;
+	char *path, *fname = malloc(_strlen(argv[0] + 2) + 1);
+	char *cname = malloc(_strlen(tok[0]) + 1);
+	struct stat buf;
+	int i, sflag = 0, n, ex = 0;
 
-	_strcpy(fname, tok[0]);
+	if (fname == NULL || cname == NULL)
+	{
+		if (fname)
+			free(fname);
+		if (cname)
+			free(cname);
+		write(2, NOMEM, _strlen(NOMEM));
+		return (-229);
+	}
+	_strcpy(fname, argv[0] + 2);
+	_strcpy(cname, tok[0]);
 	for (i = 0; tok[0][i]; i++)
 		if (tok[0][i] == '/')
 		{
@@ -165,34 +199,45 @@ int path_check(int *runs, char **tok, char **envp, char **argv, char **pathTok)
 			break;
 		}
 	if (sflag == 1)
-		e = fork_exe(tok, envp);
+	{
+		fork_exe(tok, envp, fname, &ex);
+	}
 	else
 	{
 		for (i = 0; pathTok[i]; i++)
 		{
 			path = malloc((_strlen(pathTok[i]) + _strlen(tok[0])
-				       + 1) * sizeof(char));
+				       + 1 + 1) * sizeof(char));
 			if (path == NULL)
-				perror(NOMEM);
+				write(2, NOMEM, _strlen(NOMEM)), exit(99);
 			_strcpy(path, pathTok[i]);
 			path[_strlen(path)] = '/';
-			_strcpy(path + _strlen(pathTok[i]) + 1, fname);
+			_strcpy(path + _strlen(pathTok[i]) + 1, cname);
 			free(tok[0]);
 			tok[0] = path;
-			e = fork_exe(tok, envp);
-			if (e == 0)
+			if (!stat(tok[0], &buf))
+			{
+				fork_exe(tok, envp, fname, &ex);
 				break;
-			if (e == -1)
-				continue;
+			}
 		}
-		if (!pathTok[i])
+		if (!pathTok[i] || ex != 0)
 		{
-			dprintf(STDERR_FILENO, "%s: %d: %s: not found\n",
-				argv[0], *runs++, fname);
+			if (ex == 126)
+				n = 126;
+			else
+			{
+				stat(tok[0], &buf);
+				perror(fname);
+				n = 127;
+			}
 			free(fname);
-			return (127);
+			free(cname);
+			return (n);
 		}
 	}
+	runs++;
 	free(fname);
+	free(cname);
 	return (0);
 }
