@@ -13,6 +13,7 @@ In order to operate **hsh**, compile all the .c files in the master repository a
 
 **hsh** can be invoked both interactively and non-interactively. 
 I.E:
+
 	**Interactively**
 	
 	Input: $./hsh
