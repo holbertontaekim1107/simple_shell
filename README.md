@@ -40,12 +40,25 @@ i.E:
 
 * Usage: exit[status]
 * Exits the shell
-* If no argument is given to the prompt, the command is taken as exit 0, exiting the hsh.
+* If no argument is given to the prompt, the command is by default taken as exit 0, unless if previous command returned error.
+* Ctrl^d or EOF command can be used to exit the hsh with the same exit code as if exit was sent to hsh without a status.
 
 I.E
 
+	Exit usage:
+
 	Input: $ exit
 	Output:vagrant@vagrant-ubuntu-trusty-64:~$
+
+	Ctrl^d usage:
+	
+	Input: $Ctrl^d
+	Output:vagrant@vagrant-ubuntu-trusty-64:~$
+
+	EOF usage:
+
+	Cannot be seen
+
 
 ## Built By
 * Tommy Kim
