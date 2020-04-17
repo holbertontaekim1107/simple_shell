@@ -12,12 +12,19 @@
 
 char **_strtok(char *line, char *delm)
 {
-	char *tok, **ptr;
+	char *tok, **ptr, *tmpline = NULL;
 	int i;
 	size_t words = 0;
 
 	if (line == NULL || delm == NULL)
 		return (NULL);
+	if (line[0] == ':' || !_strcmp(line, ""))
+	{
+		tmpline = malloc(_strlen(line) + 2);
+		tmpline[0] = '.';
+		_strcpy(tmpline + 1, line);
+		line = tmpline;
+	}
 	for (i = 0; line[i]; i++)
 	{
 		if (line[i] != *delm && (line[i + 1] == *delm ||
@@ -49,6 +56,7 @@ char **_strtok(char *line, char *delm)
 		tok = strtok(NULL, delm);
 	}
 	ptr[i] = NULL;
-
+	if (tmpline)
+		free(tmpline);
 	return (ptr);
 }

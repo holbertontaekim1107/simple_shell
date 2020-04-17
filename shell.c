@@ -3,6 +3,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
+#include <errno.h>
 
 #define NOMEM ("Error: Failed to allocate memory\n")
 #define FAILFORK ("Error creating fork\n")
@@ -10,7 +11,7 @@
 int path_check(int *runs, char **tok, char **envp, char **argv,
 	       char **pathTok);
 void free_all(char **s);
-int fork_exe(char **tok, char **envp);
+int fork_exe(char **tok, char **envp, char *fname, int *ex);
 void sigint_handle(int sig);
 /**
  * main - A simple shell program
@@ -55,11 +56,20 @@ int main(int argc, char *argv[], char *envp[])
 			continue;
 		tok = _strtok(buff, " ");
 		if (!_strcmp(tok[0], "exit"))/*exit builtin with(out) args*/
+		{
+			if (tok[1] && _atoi(tok[1]) < 0)
+			{
+				write(2, argv[0], _strlen(argv[0]));
+				write(2, ": illegal number", 17);
+				continue;
+			}
 			break;
+		}
 		else if (!_strcmp(tok[0], "cd"))
 		{
-			cd(tok[1]);
+			cd(tok[1], envp);
 			runs++;
+			free_all(tok);
 			continue;
 		}
 		p = path_check(&runs, tok, envp, argv, ptok);
@@ -106,9 +116,11 @@ void sigint_handle(int sig)
  * fork_exe - performs an action based on fork pid
  * @tok: An array of strings containing the tokens
  * @envp: Program environment
+ * @fname: Filename for errors
+ * @ex: pointer to the exit status
  * Return: 0
  */
-int fork_exe(char **tok, char **envp)
+int fork_exe(char **tok, char **envp, char *fname, int *ex)
 {
 	int e = 0, status;
 	pid_t pid = fork();
@@ -116,6 +128,9 @@ int fork_exe(char **tok, char **envp)
 	if (pid == 0)
 	{
 		e = execve(tok[0], tok, envp);
+		perror(fname);
+		if (errno == EACCES)
+			*ex = 126;
 		exit(e);
 	}
 	else if (pid == -1)
@@ -128,6 +143,8 @@ int fork_exe(char **tok, char **envp)
 		} while (!WIFEXITED(status) && !WIFSIGNALED(status));
 		if (WEXITSTATUS(status) == 255)
 			return (-1);
+		if (*ex != 0)
+			return (*ex);
 	}
 	return (0);
 }
@@ -162,7 +179,7 @@ int path_check(int *runs, char **tok, char **envp, char **argv, char **pathTok)
 	char *path, *fname = malloc(_strlen(argv[0] + 2) + 1);
 	char *cname = malloc(_strlen(tok[0]) + 1);
 	struct stat buf;
-	int i, sflag = 0;
+	int i, sflag = 0, n, ex = 0;
 
 	if (fname == NULL || cname == NULL)
 	{
@@ -183,8 +200,7 @@ int path_check(int *runs, char **tok, char **envp, char **argv, char **pathTok)
 		}
 	if (sflag == 1)
 	{
-		if (fork_exe(tok, envp) != 0)
-			perror(fname);
+		fork_exe(tok, envp, fname, &ex);
 	}
 	else
 	{
@@ -201,17 +217,23 @@ int path_check(int *runs, char **tok, char **envp, char **argv, char **pathTok)
 			tok[0] = path;
 			if (!stat(tok[0], &buf))
 			{
-				fork_exe(tok, envp);
+				fork_exe(tok, envp, fname, &ex);
 				break;
 			}
 		}
-		if (!pathTok[i])
+		if (!pathTok[i] || ex != 0)
 		{
-			stat(tok[0], &buf);
-			perror(fname);
+			if (ex == 126)
+				n = 126;
+			else
+			{
+				stat(tok[0], &buf);
+				perror(fname);
+				n = 127;
+			}
 			free(fname);
 			free(cname);
-			return (127);
+			return (n);
 		}
 	}
 	runs++;
