@@ -5,6 +5,14 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <signal.h>
+#include <errno.h>
+extern char **environ;
+
+int hist;
+
+char *name;
+
+
 char **_strtok(char *line, char *delm);
 
 int _strcmp(char *s1, char *s2);
@@ -28,7 +36,4 @@ char **_getenv(const char *var);
 int nlen(int num);
 char *my_itoa(int num);
 
-extern char **environ;
-int hist;
-char *name;
 #endif
