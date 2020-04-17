@@ -29,7 +29,7 @@ I.E:
 When **hsh** recieves a command, it will tokenize it into words. The first word is considered the command and the remaining words will be considered arguments to that command. 
 **hsh** will then proceed to execute the named program with any remaining given arguments.
 
-i.E:
+I.E:
 
 	Input: $./hsh
 	     : $ls
@@ -52,7 +52,7 @@ I.E
 
 	Ctrl^d usage:
 	
-	Input: $Ctrl^d
+	Input: Ctrl^d
 	Output:vagrant@vagrant-ubuntu-trusty-64:~$
 
 	EOF usage:
