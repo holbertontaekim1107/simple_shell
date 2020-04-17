@@ -7,13 +7,15 @@
  *
  * Return: void
  */
-void _strcpy(char *dest, char *src)
-{
-	int i = 0;
 
-	for (; src[i]; i++)
+char *_strcpy(char *dest, char *src)
+{
+	size_t i;
+
+	for (i = 0; src[i] != '\0'; i++)
 		dest[i] = src[i];
 	dest[i] = '\0';
+	return (dest);
 }
 /**
  * _strlen - finds the length of an input string
@@ -50,6 +52,29 @@ int _strcmp(char *s1, char *s2)
 		return (0);
 	else
 		return (*s1 - *s2);
+}
+/**
+ * _strcat - Concantenates two strings
+ * @dest: poiner to dest string
+ * @src: pointer to source string
+ * Return: pointer to dest string
+ */
+
+char *_strcat(char *dest, const char *src)
+{
+	char *temp_dest;
+	const char *temp_src;
+
+	temp_dest = dest;
+	temp_src =  src;
+
+	while (*temp_dest != '\0')
+		temp_dest++;
+
+	while (*temp_src != '\0')
+		*temp_dest++ = *temp_src++;
+	*temp_dest = '\0';
+	return (dest);
 }
 /**
  * _strncmp - compares n bytes of two strings
