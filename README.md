@@ -6,6 +6,7 @@ A simple UNIX command interpreter written for a low-level programming project at
 
 ## Invocation
 To use **hsh**: **hsh** [filename]
+
 In order to operate **hsh**, compile all the .c files in the master repository and run the executable: 
 
 	gcc *.c -o hsh
@@ -14,12 +15,12 @@ In order to operate **hsh**, compile all the .c files in the master repository a
 **hsh** can be invoked both interactively and non-interactively. 
 I.E:
 
-	**Interactively**
+	Interactively:
 	
 	Input: $./hsh
 	Output: $
 
-	**Non-Interactively**
+	Non-Interactively:
 
 	Input: $ echo "echo 'hello world'" | ./hsh
 	Output: 'hello world'
